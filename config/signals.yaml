@@ -1,0 +1,54 @@
+# Signal definitions and first-guess weights (Step 2).
+# Weights will be revised in Step 6. Scored weights must add up to 100.
+
+filters:
+  headcount:
+    min: 50
+    max: 500
+    hq_regions: [UK, EU]
+    source: apollo
+
+signals:
+  it_hiring:
+    weight: 40
+    lookback_days: 60
+    sources: [apollo_job_postings, firecrawl_careers_page]
+    title_keywords:
+      - it administrator
+      - systems administrator
+      - sysadmin
+      - it support
+      - helpdesk
+      - service desk
+      - desktop support
+      - it manager
+      - infrastructure engineer
+
+  microsoft_stack:
+    weight: 25
+    min_technologies: 2
+    sources: [apollo_technologies, job_post_text]
+    technologies:
+      - microsoft_365
+      - azure
+      - entra_id
+      - intune
+      - microsoft_teams
+    job_post_keywords: [microsoft 365, azure ad, entra, intune, active directory]
+
+  funding_or_growth:
+    weight: 20
+    funding_lookback_months: 18
+    headcount_growth_min_pct: 10
+    headcount_growth_months: 12
+    sources: [apollo_funding, apollo_headcount_growth]
+
+  remote_or_multi_location:
+    weight: 15
+    probation: true
+    min_locations: 2
+    sources: [apollo_job_locations, firecrawl_careers_page, firecrawl_company_site]
+
+reliability_test:
+  min_coverage_pct: 80
+  min_accuracy_pct: 90

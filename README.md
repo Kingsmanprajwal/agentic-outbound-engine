@@ -9,5 +9,6 @@ An outbound research engine for IT-managed SMBs and MSPs in the UK and EU. It co
 | Step | Document | Status |
 |---|---|---|
 | 1. Scope and signals | [docs/01-scope-and-signals.md](docs/01-scope-and-signals.md) | Draft |
+| 2. Signals and weights | [docs/02-signals.md](docs/02-signals.md) · [config/signals.yaml](config/signals.yaml) | Draft |
 
 Each step gets its own numbered document in `docs/`. No workflow is built until Step 1 is agreed.
