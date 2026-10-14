@@ -29,6 +29,11 @@ Follows the 10 phases in the [build guide](docs/02-build-guide.md).
 | 9 | Measure it | Not started |
 | 10 | Package it | Not started |
 
+## Stack changes from the build guide
+
+- **Gemini API free tier instead of the Claude API** for research and drafting (Phases 5 and 7), so the whole build costs $0. The AI provider is a setting in `.env` (`LLM_PROVIDER`), so you can switch to Claude without changing code.
+- **The MCP server (Phase 8) still connects to Claude**, through the free Claude Desktop app.
+
 ## Ground rules
 
 - API keys live in `.env`, which Git ignores. Copy `.env.example` to `.env` to start.
