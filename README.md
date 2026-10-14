@@ -4,11 +4,34 @@ An outbound research engine for IT-managed SMBs and MSPs in the UK and EU. It co
 
 **Goal:** cut manual research per account from 3 hours to under 2 minutes, with at least 90% field-level accuracy on a 30-account manual audit.
 
-## Project process
+## Planning documents
 
 | Step | Document | Status |
 |---|---|---|
 | 1. Scope and signals | [docs/01-scope-and-signals.md](docs/01-scope-and-signals.md) | Draft |
-| 2. Signals and weights | [docs/02-signals.md](docs/02-signals.md) · [config/signals.yaml](config/signals.yaml) | Draft |
+| 2. Build guide | [docs/02-build-guide.md](docs/02-build-guide.md) | Reference |
+| 3. Signals and weights | [docs/03-signals-and-weights.md](docs/03-signals-and-weights.md) | Draft |
 
-Each step gets its own numbered document in `docs/`. No workflow is built until Step 1 is agreed.
+## Build progress
+
+Follows the 10 phases in the [build guide](docs/02-build-guide.md).
+
+| Phase | What | Status |
+|---|---|---|
+| 1 | Foundations: repo, sign-ups, n8n running, `.env` | In progress |
+| 2 | Salesforce setup | Not started |
+| 3 | Source accounts | Not started |
+| 4 | Enrichment and dedupe in n8n | Not started |
+| 5 | Research with Claude | Not started |
+| 6 | Score and prioritise | Not started |
+| 7 | Draft outreach | Not started |
+| 8 | MCP server | Not started |
+| 9 | Measure it | Not started |
+| 10 | Package it | Not started |
+
+## Ground rules
+
+- API keys live in `.env`, which Git ignores. Copy `.env.example` to `.env` to start.
+- Salesforce Developer Edition only, never an employer org.
+- Nothing sends automatically. Every email is a draft that waits for human approval.
+- Company-level data only.

@@ -1,0 +1,20 @@
+# Secrets: never commit real keys
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Logs and local data
+*.log
+mcp_server/audit.log
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -60,7 +60,7 @@ Every signal is binary: an account either gets the full points or none. That kee
 | S4. Remote or multi-location | 15 | Real pain, but the weakest source |
 | **Total** | **100** | |
 
-These are first guesses. They get revised in Step 6, after the scores are compared against real accounts. The weights live in [`config/signals.yaml`](../config/signals.yaml), not in code.
+These are first guesses. They get revised in Step 6, after the scores are compared against real accounts. The weights live in [`config/signals.yaml`](../config/signals.yaml) (moves to `config/scoring_weights.json` in Phase 6), not in code.
 
 Changes from Step 1:
 - Headcount went from 20 points to a filter.
