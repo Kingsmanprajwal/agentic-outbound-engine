@@ -1,0 +1,192 @@
+{
+  "name": "01 Source and dedupe accounts",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "25e52e41-5e1a-4abf-9269-07aaeac7ee04",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Edit these filters to change which companies Apollo returns.\n// Each run uses 1 Apollo credit per page of results.\nreturn [{\n  json: {\n    organization_locations: ['United Kingdom', 'Ireland', 'Netherlands', 'Germany'],\n    organization_num_employees_ranges: ['51,200', '201,500'],\n    per_page: 25,\n    page: 1,\n  },\n}];"
+      },
+      "id": "3dfa4d39-6c1e-4235-95a1-9f701a6d012f",
+      "name": "Search settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/api/v1/mixed_companies/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "59952829-da5c-4747-8fc2-bd3bf8afe782",
+      "name": "Apollo company search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turn Apollo's response into one clean item per company, keyed by domain.\nconst res = $input.first().json;\nconst orgs = [...(res.organizations || []), ...(res.accounts || [])];\n\nconst normaliseDomain = (raw) => (raw || '')\n  .toLowerCase().trim()\n  .replace(/^https?:\\/\\//, '')\n  .replace(/^www\\./, '')\n  .replace(/\\/.*$/, '');\n\nconst seen = new Set();\nconst out = [];\nfor (const o of orgs) {\n  const domain = normaliseDomain(o.primary_domain || o.domain || o.website_url);\n  if (!domain || seen.has(domain)) continue;\n  seen.add(domain);\n  out.push({\n    json: {\n      name: (o.name || '').trim(),\n      domain,\n      website: `https://${domain}`,\n      headcount: o.estimated_num_employees ?? null,\n      country: o.country || '',\n      industry: o.industry || '',\n    },\n  });\n}\nreturn out;"
+      },
+      "id": "82eea721-241d-4093-b1da-ad58ff5a270a",
+      "name": "Normalise companies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "search",
+        "operation": "query",
+        "query": "SELECT Id, Website FROM Account WHERE Website != null"
+      },
+      "id": "9a148da3-1da7-48ee-947a-72f6a2adc874",
+      "name": "Existing Salesforce websites",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        880,
+        0
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Drop companies whose website is already on an Account in Salesforce.\nconst normaliseDomain = (raw) => (raw || '')\n  .toLowerCase().trim()\n  .replace(/^https?:\\/\\//, '')\n  .replace(/^www\\./, '')\n  .replace(/\\/.*$/, '');\n\nconst existing = new Set(\n  $input.all().map((i) => normaliseDomain(i.json.Website)).filter(Boolean),\n);\nconst companies = $('Normalise companies').all();\nconst fresh = companies.filter((i) => !existing.has(i.json.domain));\n\nconsole.log(`${companies.length} from Apollo, ${companies.length - fresh.length} already in Salesforce, ${fresh.length} new`);\nreturn fresh.map((i) => ({ json: i.json }));"
+      },
+      "id": "f883de46-7584-4fa3-aa9f-cb82def6835b",
+      "name": "Keep only new accounts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "account",
+        "operation": "create",
+        "name": "={{ $json.name }}",
+        "additionalFields": {
+          "website": "={{ $json.website }}",
+          "numberOfEmployees": "={{ $json.headcount }}",
+          "industry": "={{ $json.industry }}",
+          "billingCountry": "={{ $json.country }}"
+        }
+      },
+      "id": "29ed18db-a13b-4eb8-825d-aa8aa74c0130",
+      "name": "Create Salesforce account",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Search settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search settings": {
+      "main": [
+        [
+          {
+            "node": "Apollo company search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo company search": {
+      "main": [
+        [
+          {
+            "node": "Normalise companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalise companies": {
+      "main": [
+        [
+          {
+            "node": "Existing Salesforce websites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing Salesforce websites": {
+      "main": [
+        [
+          {
+            "node": "Keep only new accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep only new accounts": {
+      "main": [
+        [
+          {
+            "node": "Create Salesforce account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
