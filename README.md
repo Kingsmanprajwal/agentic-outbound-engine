@@ -14,9 +14,9 @@ An outbound research engine for IT-managed SMBs and MSPs in the UK and EU. It co
 
 ## Account research
 
-| Company | File | Score | Verdict |
-|---|---|---|---|
-| Valuebound | [docs/research/valuebound.md](docs/research/valuebound.md) | 15/100 | Outside target market (no UK/EU office) |
+| Company | File | What it is |
+|---|---|---|
+| Valuebound | [docs/research/valuebound-icp.md](docs/research/valuebound-icp.md) | Valuebound's own ICP, written as its GTM engineer |
 
 ## Build progress
 
