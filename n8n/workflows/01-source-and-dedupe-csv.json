@@ -1,0 +1,176 @@
+{
+  "name": "01 Source and dedupe accounts (CSV)",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload accounts CSV",
+        "formDescription": "Upload the companies CSV exported from Apollo (or the template in data/). Company data only.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Accounts CSV",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".csv",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "44718b9d-ffdb-4259-9639-f2672cbf8178",
+      "name": "Upload accounts CSV",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "06462289-5fa4-4e13-bdb6-78d0ba9aa047"
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "binaryPropertyName": "Accounts_CSV",
+        "options": {}
+      },
+      "id": "db4b9202-4882-4d77-a522-6ef058702afe",
+      "name": "Read CSV",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Turn each CSV row into one clean item per company, keyed by domain.\n// Works with Apollo's export headers or the simple template (name, domain, headcount, country, industry).\nconst key = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, '');\nconst pick = (row, names) => {\n  const wanted = names.map(key);\n  for (const [k, v] of Object.entries(row)) {\n    if (wanted.includes(key(k)) && String(v ?? '').trim() !== '') return String(v).trim();\n  }\n  return '';\n};\nconst normaliseDomain = (raw) => (raw || '')\n  .toLowerCase().trim()\n  .replace(/^https?:\\/\\//, '')\n  .replace(/^www\\./, '')\n  .replace(/\\/.*$/, '');\n\nconst seen = new Set();\nconst out = [];\nfor (const { json: row } of $input.all()) {\n  const domain = normaliseDomain(pick(row, ['domain', 'website', 'company website', 'primary domain']));\n  if (!domain || seen.has(domain)) continue;\n  seen.add(domain);\n  const headcount = parseInt(pick(row, ['headcount', '# employees', 'employees', 'number of employees']).replace(/[^0-9]/g, ''), 10);\n  out.push({\n    json: {\n      name: pick(row, ['name', 'company', 'company name', 'account name']),\n      domain,\n      website: `https://${domain}`,\n      headcount: Number.isNaN(headcount) ? null : headcount,\n      country: pick(row, ['country', 'company country', 'hq country']),\n      industry: pick(row, ['industry']),\n    },\n  });\n}\nreturn out;"
+      },
+      "id": "5e0dee84-e29c-4a28-8e1d-73385ce9b5f6",
+      "name": "Normalise companies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "search",
+        "operation": "query",
+        "query": "SELECT Id, Website FROM Account WHERE Website != null"
+      },
+      "id": "6629d77c-0f61-45d9-abaf-0e46a8101ea5",
+      "name": "Existing Salesforce websites",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Drop companies whose website is already on an Account in Salesforce.\nconst normaliseDomain = (raw) => (raw || '')\n  .toLowerCase().trim()\n  .replace(/^https?:\\/\\//, '')\n  .replace(/^www\\./, '')\n  .replace(/\\/.*$/, '');\n\nconst existing = new Set(\n  $input.all().map((i) => normaliseDomain(i.json.Website)).filter(Boolean),\n);\nconst companies = $('Normalise companies').all();\nconst fresh = companies.filter((i) => !existing.has(i.json.domain));\n\nconsole.log(`${companies.length} from source, ${companies.length - fresh.length} already in Salesforce, ${fresh.length} new`);\nreturn fresh.map((i) => ({ json: i.json }));"
+      },
+      "id": "28bf5827-1e8b-4c1e-87a0-08eaa38328a3",
+      "name": "Keep only new accounts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "account",
+        "operation": "create",
+        "name": "={{ $json.name }}",
+        "additionalFields": {
+          "website": "={{ $json.website }}",
+          "numberOfEmployees": "={{ $json.headcount }}",
+          "industry": "={{ $json.industry }}",
+          "billingCountry": "={{ $json.country }}"
+        }
+      },
+      "id": "aa06bfa8-5680-427f-af56-a2db7229e20e",
+      "name": "Create Salesforce account",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        0
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Upload accounts CSV": {
+      "main": [
+        [
+          {
+            "node": "Read CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read CSV": {
+      "main": [
+        [
+          {
+            "node": "Normalise companies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalise companies": {
+      "main": [
+        [
+          {
+            "node": "Existing Salesforce websites",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Existing Salesforce websites": {
+      "main": [
+        [
+          {
+            "node": "Keep only new accounts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep only new accounts": {
+      "main": [
+        [
+          {
+            "node": "Create Salesforce account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

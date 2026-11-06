@@ -83,7 +83,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Drop companies whose website is already on an Account in Salesforce.\nconst normaliseDomain = (raw) => (raw || '')\n  .toLowerCase().trim()\n  .replace(/^https?:\\/\\//, '')\n  .replace(/^www\\./, '')\n  .replace(/\\/.*$/, '');\n\nconst existing = new Set(\n  $input.all().map((i) => normaliseDomain(i.json.Website)).filter(Boolean),\n);\nconst companies = $('Normalise companies').all();\nconst fresh = companies.filter((i) => !existing.has(i.json.domain));\n\nconsole.log(`${companies.length} from Apollo, ${companies.length - fresh.length} already in Salesforce, ${fresh.length} new`);\nreturn fresh.map((i) => ({ json: i.json }));"
+        "jsCode": "// Drop companies whose website is already on an Account in Salesforce.\nconst normaliseDomain = (raw) => (raw || '')\n  .toLowerCase().trim()\n  .replace(/^https?:\\/\\//, '')\n  .replace(/^www\\./, '')\n  .replace(/\\/.*$/, '');\n\nconst existing = new Set(\n  $input.all().map((i) => normaliseDomain(i.json.Website)).filter(Boolean),\n);\nconst companies = $('Normalise companies').all();\nconst fresh = companies.filter((i) => !existing.has(i.json.domain));\n\nconsole.log(`${companies.length} from source, ${companies.length - fresh.length} already in Salesforce, ${fresh.length} new`);\nreturn fresh.map((i) => ({ json: i.json }));"
       },
       "id": "f883de46-7584-4fa3-aa9f-cb82def6835b",
       "name": "Keep only new accounts",

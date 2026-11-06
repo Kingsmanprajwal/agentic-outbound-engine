@@ -2,7 +2,8 @@
 
 | File | What it does |
 |---|---|
-| `01-source-and-dedupe.json` | Pulls companies from Apollo, cleans the domains, skips any already in Salesforce, and creates the new ones as Accounts |
+| `01-source-and-dedupe-csv.json` | **Use this on Apollo's free plan.** Upload a CSV through an n8n form, clean the domains, skip any already in Salesforce, create the new ones as Accounts |
+| `01-source-and-dedupe.json` | Same, but pulls companies straight from the Apollo API. Needs a paid Apollo plan (free plans get 403). |
 
 ## 01 Source and dedupe accounts
 
@@ -29,3 +30,14 @@ Start → Search settings → Apollo company search → Normalise companies
 - Each run uses 1 Apollo credit per page (25 companies by default). Change the filters in the **Search settings** node.
 - If Apollo's API is locked on your plan, the Apollo node returns 403. The CSV fallback comes next.
 - Create Salesforce account continues on error, so one rejected company (for example, blocked by the duplicate rule) doesn't stop the rest. Check its output for errors after each run.
+
+## 01 Source and dedupe accounts (CSV)
+
+```
+Upload accounts CSV (form) → Read CSV → Normalise companies
+      → Existing Salesforce websites → Keep only new accounts → Create Salesforce account
+```
+
+- The CSV can use Apollo's export headers (Company, Website, # Employees, Company Country, Industry) or the simple template in `data/accounts_template.csv` (name, domain, headcount, country, industry).
+- Rows without a website are skipped, and repeated domains are kept once.
+- Only the Salesforce credential is needed.
