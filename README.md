@@ -24,10 +24,10 @@ Follows the 10 phases in the [build guide](docs/02-build-guide.md).
 
 | Phase | What | Status |
 |---|---|---|
-| 1 | Foundations: repo, sign-ups, n8n running, `.env` | In progress |
-| 2 | Salesforce setup | Not started |
-| 3 | Source accounts | Not started |
-| 4 | Enrichment and dedupe in n8n | Not started |
+| 1 | Foundations: repo, sign-ups, n8n running, `.env` | Done |
+| 2 | Salesforce setup | Done (custom fields) |
+| 3 | Source accounts | Done: 25 companies exported from Apollo as CSV (the free plan blocks the API) |
+| 4 | Enrichment and dedupe in n8n | In progress: ingest, normalise, dedupe and create done (24 Accounts created); enrichment, hiring signal and error workflow to do |
 | 5 | Research with Claude | Not started |
 | 6 | Score and prioritise | Not started |
 | 7 | Draft outreach | Not started |
